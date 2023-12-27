@@ -1,14 +1,13 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11 -fprofile-arcs -ftest-coverage
+CFLAGS = -Wall -Wextra -Werror -std=c11 --coverage
 LIBS = -lcheck -lsubunit -lm
 
-DFLAG = -D_POSIX_C_SOURCE=200809L
-
-SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c
+# src
+SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c s21_fmod.c
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # static lib
-LIBRARY = s21_math.a
+STATIC_LIBRARY = s21_math.a
 # tests
 EXECUTABLE = s21_tests
 
@@ -23,25 +22,34 @@ all: s21_math.a $(EXECUTABLE) test gcov_report
 
 # build static lib
 s21_math.a: $(OBJ_FILES)
-	ar rcs $(LIBRARY) $(OBJ_FILES)
+	ar rcs $(STATIC_LIBRARY) $(OBJ_FILES)
 
 # build tests
-$(EXECUTABLE): $(LIBRARY) $(TEST_OBJ)
-	$(CC) $(CFLAGS) $(DFLAG) $(TEST_OBJ) -o $(EXECUTABLE) -L. -l:$(LIBRARY) $(LIBS)
+$(EXECUTABLE): $(STATIC_LIBRARY) $(TEST_OBJ)
+	$(CC) $(CFLAGS) $(TEST_OBJ) -o $(EXECUTABLE) $(STATIC_LIBRARY) $(LIBS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(DFLAG) -c $< -o $@
+%.o: %.c 
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # run tests
 test: $(EXECUTABLE)
+	rm -f *.o
 	./$(EXECUTABLE)
 
 # coverage test
 coverage: test
-	gcov $(SRC_FILES) $(TEST_SRC)
+	gcov s21_*.gcda
 
 gcov_report: coverage
-	gcovr -r . --html --html-details -o coverage_report.html
+	lcov -c -d . -o s21_math.info
+	genhtml -o ./report s21_math.info
+
+valgrind: $(EXECUTABLE)
+	$(VALG)$(EXECUTABLE)
+	rm -f *.gc* *.o
+
+cpp_check: 
+	$(CPPCH) *.c *.h
 
 # format code style
 clang_all:
@@ -51,6 +59,9 @@ clang_all:
 	rm -f .clang-format
 
 clean:
-	rm -f $(EXECUTABLE) $(LIBRARY) *.gc* *.html *.css *.o
+	rm -f $(EXECUTABLE) $(STATIC_LIBRARY) *.gc* *.html *.css *.o s21_math.info
+	rm -rf report
+
+rebuild: clean all
 
 .PHONY: all test clean s21_math.a gcov_report
