@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -std=c11 -fprofile-arcs -ftest-coverage -g #-c
-LIBS = -lcheck -lsubunit -lm
+LIBS = -lcheck  -lm #-lsubunit
 #LIBS = -lm  ＃hope for IMAC
 VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=RESULT_VALGRIND.txt ./
 #VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=RESULT_VALGRIND.txt ./
