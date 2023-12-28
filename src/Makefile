@@ -1,56 +1,48 @@
 CC = gcc
-
 CFLAGS = -Wall -Wextra -Werror -std=c11
 GCOV_FLAGS = -fprofile-arcs -ftest-coverage
 
-LIBS = -lcheck -lm
+LIBS = -lcheck -lm -lsubunit 
+# без этой библиотеки  ^     не запускается у меня. хз почему
 
-# check
 VALG = valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=RESULT_VALGRIND.txt ./
-CPPCH = cppcheck --enable=all --suppress=missingIncludeSystem --suppress=invalidFunctionArg --force 
+CPPCH = cppcheck --enable=all --suppress=missingIncludeSystem --suppress=invalidFunctionArg --force
 
-# src
 SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c s21_fmod.c
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
-# static lib
 HEAD_FILE = s21_math.h
 LIBRARY = $(HEAD_FILE:.h=.a)
 
-# tests
 EXECUTABLE = s21_tests
+GCOV_EXECUTABLE = s21_gcov_tests
 
-# test src
-TEST_SRC = $(SRC_FILES) tests.c
+TEST_SRC = tests.c
 TEST_OBJ = $(TEST_SRC:.c=.o)
 
-# format src
-SRC_CL=../materials/linters/.clang-format
+SRC_CL = ../materials/linters/.clang-format
 
 all: $(LIBRARY)
 
-# build static lib
 $(LIBRARY): $(OBJ_FILES) $(HEAD_FILE)
 	ar rcs $@ $^
-	rm -f *.o
 
-# build object files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# build test file
 $(EXECUTABLE): $(TEST_SRC) $(LIBRARY)
-	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $(EXECUTABLE) $(LIBRARY) $(LIBS)
+	$(CC) $(CFLAGS) $(SRC_FILES) $(TEST_SRC) -o $(EXECUTABLE) $(LIBS)
 
-# run tests
-test: $(EXECUTABLE)
+test: $(LIBRARY) $(EXECUTABLE)
 	./$(EXECUTABLE)
+	rm -r $(OBJ_FILES)
 
-# coverage test
-coverage: test
-	gcov $(TEST_SRC)
+$(GCOV_EXECUTABLE): $(SRC_FILES) $(TEST_SRC) $(LIBRARY)
+	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $@ $(LIBS)
 
-gcov_report: coverage
+gcov_report: $(GCOV_EXECUTABLE)
+	./$(GCOV_EXECUTABLE)
+	gcov *.gcda
 	gcovr -r . --html --html-details -o coverage_report.html
 	rm -f *.gc* *.o
 
@@ -58,10 +50,9 @@ valgrind: $(EXECUTABLE)
 	$(VALG) $(EXECUTABLE)
 	rm -f *.gc* *.o
 
-cpp_check: 
-	$(CPPCH) *.c *.h
+cpp_check:
+	$(CPPCH) $(SRC_FILES) $(HEAD_FILE)
 
-# format code style
 clang_all:
 	cp $(SRC_CL) .clang-format
 	clang-format -i *.c
@@ -69,8 +60,8 @@ clang_all:
 	rm -f .clang-format
 
 clean:
-	rm -f $(EXECUTABLE) $(LIBRARY) *.gc* *.html *.css *.o
+	rm -f $(EXECUTABLE) $(GCOV_EXECUTABLE) $(LIBRARY) *.gc* *.html *.css *.o
 
 rebuild: clean all
 
-.PHONY: all test clean s21_math.a gcov_report
+.PHONY: all test clean gcov_report valgrind cpp_check clang_all
