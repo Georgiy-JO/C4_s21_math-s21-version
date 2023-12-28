@@ -54,3 +54,5 @@ dkms.conf
 src/s21_test_riderkri
 README_RUS.md
 ../README_RUS.md
+.DS_Store
+.DS_Store
