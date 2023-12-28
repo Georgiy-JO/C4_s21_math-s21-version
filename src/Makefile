@@ -1,51 +1,61 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11 --coverage
-LIBS = -lcheck -lsubunit -lm
+
+CFLAGS = -Wall -Wextra -Werror -std=c11
+GCOV_FLAGS = -fprofile-arcs -ftest-coverage
+
+LIBS = -lcheck -lm
+
+# check
+VALG = valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=RESULT_VALGRIND.txt ./
+CPPCH = cppcheck --enable=all --suppress=missingIncludeSystem --suppress=invalidFunctionArg --force 
 
 # src
 SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c s21_fmod.c
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # static lib
-STATIC_LIBRARY = s21_math.a
+HEAD_FILE = s21_math.h
+LIBRARY = $(HEAD_FILE:.h=.a)
+
 # tests
 EXECUTABLE = s21_tests
 
 # test src
-TEST_SRC = tests.c
+TEST_SRC = $(SRC_FILES) tests.c
 TEST_OBJ = $(TEST_SRC:.c=.o)
 
 # format src
 SRC_CL=../materials/linters/.clang-format
 
-all: s21_math.a $(EXECUTABLE) test gcov_report
+all: $(LIBRARY)
 
 # build static lib
-s21_math.a: $(OBJ_FILES)
-	ar rcs $(STATIC_LIBRARY) $(OBJ_FILES)
+$(LIBRARY): $(OBJ_FILES) $(HEAD_FILE)
+	ar rcs $@ $^
+	rm -f *.o
 
-# build tests
-$(EXECUTABLE): $(STATIC_LIBRARY) $(TEST_OBJ)
-	$(CC) $(CFLAGS) $(TEST_OBJ) -o $(EXECUTABLE) $(STATIC_LIBRARY) $(LIBS)
-
-%.o: %.c 
+# build object files
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# build test file
+$(EXECUTABLE): $(TEST_SRC)
+	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $(EXECUTABLE) $(LIBS) 
 
 # run tests
 test: $(EXECUTABLE)
-	rm -f *.o
 	./$(EXECUTABLE)
 
 # coverage test
 coverage: test
-	gcov s21_*.gcda
+	gcov $(TEST_SRC)
 
 gcov_report: coverage
-	lcov -c -d . -o s21_math.info
-	genhtml -o ./report s21_math.info
+	gcovr -r . --html --html-details -o coverage_report.html
+	rm -f *.gc* *.o
 
 valgrind: $(EXECUTABLE)
-	$(VALG)$(EXECUTABLE)
+	$(VALG) $(EXECUTABLE)
 	rm -f *.gc* *.o
 
 cpp_check: 
@@ -59,8 +69,7 @@ clang_all:
 	rm -f .clang-format
 
 clean:
-	rm -f $(EXECUTABLE) $(STATIC_LIBRARY) *.gc* *.html *.css *.o s21_math.info
-	rm -rf report
+	rm -f $(EXECUTABLE) $(LIBRARY) *.gc* *.html *.css *.o
 
 rebuild: clean all
 
