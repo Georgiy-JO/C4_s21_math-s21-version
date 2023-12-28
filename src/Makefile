@@ -59,7 +59,7 @@ coverage: test
 
 gcov_report: coverage
 	gcovr -r . --html --html-details -o coverage_report.html
-	rm -f *.tst.gc* *.o
+#	rm -f *.gc* *.o
 
 valgrind: $(EXECUTABLE)
 	$(VALG)$(EXECUTABLE)
