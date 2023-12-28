@@ -1,11 +1,12 @@
 #include "s21_math.h"
 
 long double s21_cos(double x) {
-  long double res = 0.0, step = 1.0;
+  long double res = 0.0;
   double flag = 0.0;
   res = s21_nans_infs(x);
   if (!res) {
     flag = s21_extra_pi_romoval(&x);
+    long double step = 1.0;
     for (long double i = 2; step >= EPSilon || step <= -EPSilon; i += 2) {
       res += step;
       step = MINUS * step * x * x / (i * (i - ONE));

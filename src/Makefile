@@ -10,6 +10,7 @@ CPPCH = cppcheck --enable=all --suppress=missingIncludeSystem --suppress=invalid
 DFLAG = -D_POSIX_C_SOURCE=200809L
 
 SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c s21_fmod.c
+SRC_FILES_TST = s21_abs_fabs_ceil_floor.tst.c s21_cos_sin_tan.tst.c s21_exp.tst.c s21_ln.tst.c s21_pow_sqrt.tst.c s21_acos_asin_atan.tst.c s21_fmod.tst.c
 HEAD_FILE = s21_math.h
 OBJ_FILES_TEST = $(SRC_FILES:.c=.tst.o)
 OBJ_FILES = $(SRC_FILES:.c=.o)
@@ -49,7 +50,7 @@ $(EXECUTABLE): $(TESTLIBRARY) $(TEST_OBJ)
 	$(CC) $(GENLAGS) $(DFLAG) -c $< -o $@
 
 %.tst.o: %.c $(HEAD_FILE)
-	$(CC) $(CFLAGS) $(REPLAGS) $(DFLAG) -c $< -o $@
+	$(CC) $(GENLAGS) $(REPLAGS) $(DFLAG) -c $< -o $@
 
 # run tests
 test: $(EXECUTABLE)
@@ -58,15 +59,16 @@ test: $(EXECUTABLE)
 
 # coverage test
 coverage: test
-	gcov $(SRC_FILES) $(TEST_SRC)
+	gcov $(SRC_FILES_TST)
+#	gcov  *.tst.c
 
 gcov_report: coverage
 	gcovr -r . --html --html-details -o coverage_report.html
-	rm -f *.gc* *.o
+	rm -f *.tst.gc* *.o
 
 valgrind: $(EXECUTABLE)
 	$(VALG)$(EXECUTABLE)
-	rm -f *.gc* *.o
+	rm -f *.tst.gc* *.o
 
 cpp_check: 
 	$(CPPCH) *.c *.h
@@ -79,7 +81,7 @@ clang_all:
 	rm -f .clang-format
 
 clean:
-	rm -f $(EXECUTABLE) $(LIBRARY) *.gc* *.html *.css *.o
+	rm -f $(EXECUTABLE) *.a *.gc* *.html *.css *.o
 
 rebuild: clean all
 
