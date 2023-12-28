@@ -1,7 +1,9 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11 -fprofile-arcs -ftest-coverage -g #-c
+GENLAGS = -Wall -Wextra -Werror -std=c11
+REPLAGS =-fprofile-arcs -ftest-coverage
+VALGFLAGS = -g
 LIBS = -lcheck  -lm #-lsubunit
-#LIBS = -lm  ＃hope for IMAC
+#LIBS = -lm  #hope for IMAC
 VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=RESULT_VALGRIND.txt ./
 #VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=RESULT_VALGRIND.txt ./
 CPPCH = cppcheck --enable=all --suppress=missingIncludeSystem --suppress=invalidFunctionArg --force 
@@ -9,10 +11,12 @@ DFLAG = -D_POSIX_C_SOURCE=200809L
 
 SRC_FILES = s21_abs_fabs_ceil_floor.c s21_cos_sin_tan.c s21_exp.c s21_ln.c s21_pow_sqrt.c s21_acos_asin_atan.c s21_fmod.c
 HEAD_FILE = s21_math.h
+OBJ_FILES_TEST = $(SRC_FILES:.c=.tst.o)
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # static lib
 LIBRARY = $(HEAD_FILE:.h=.a)     #s21_math.a
+TESTLIBRARY = $(HEAD_FILE:.h=.tst.a)
 # tests
 EXECUTABLE = s21_tests
 
@@ -28,13 +32,24 @@ all: s21_math.a $(EXECUTABLE) test gcov_report
 # build static lib
 s21_math.a: $(OBJ_FILES)
 	ar rcs $(LIBRARY) $(OBJ_FILES)
+	rm -f *.o
+
+s21_math.tst.a: $(OBJ_FILES_TEST)
+	ar rcs $(TESTLIBRARY) $(OBJ_FILES_TEST)
+	rm -f *.o	
 
 # build tests
-$(EXECUTABLE): $(LIBRARY) $(TEST_OBJ)
-	$(CC) $(CFLAGS) $(DFLAG) $(TEST_OBJ) -o $(EXECUTABLE) -L. -l:$(LIBRARY) $(LIBS)
+#$(EXECUTABLE): $(OBJ_FILES_TEST) $(TEST_OBJ)
+#	$(CC) $(GENLAGS) $(REPLAGS) $(DFLAG) $(TEST_OBJ) $(OBJ_FILES_TEST)  -o $(EXECUTABLE) $(LIBS)
+
+$(EXECUTABLE): $(TESTLIBRARY) $(TEST_OBJ)
+	$(CC) $(GENLAGS) $(REPLAGS) $(DFLAG) $(TEST_OBJ) -o $(EXECUTABLE) $(TESTLIBRARY) $(LIBS)
 
 %.o: %.c $(HEAD_FILE)
-	$(CC) $(CFLAGS) $(DFLAG) -c $< -o $@
+	$(CC) $(GENLAGS) $(DFLAG) -c $< -o $@
+
+%.tst.o: %.c $(HEAD_FILE)
+	$(CC) $(CFLAGS) $(REPLAGS) $(DFLAG) -c $< -o $@
 
 # run tests
 test: $(EXECUTABLE)
