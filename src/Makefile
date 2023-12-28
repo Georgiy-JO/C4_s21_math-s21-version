@@ -39,8 +39,8 @@ $(LIBRARY): $(OBJ_FILES) $(HEAD_FILE)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # build test file
-$(EXECUTABLE): $(TEST_SRC)
-	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $(EXECUTABLE) $(LIBS) 
+$(EXECUTABLE): $(TEST_SRC) $(LIBRARY)
+	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $(EXECUTABLE) $(LIBRARY) $(LIBS)
 
 # run tests
 test: $(EXECUTABLE)
