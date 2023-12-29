@@ -24,31 +24,38 @@ SRC_CL = ../materials/linters/.clang-format
 
 all: $(LIBRARY)
 
+# building static lib
 $(LIBRARY): $(OBJ_FILES) $(HEAD_FILE)
 	ar rcs $@ $^
-
+	
+# building objects for static lib
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# теперь цель сборки тестов выполняется аналогично вертеру
+# verter output
+# gcc -c test_math.c
+# gcc -c main.c
+# gcc -o unit_test test_math.o main.o ../../src/s21_math.a -lm
 $(EXECUTABLE): $(TEST_SRC) $(LIBRARY)
-	$(CC) $(CFLAGS) $(SRC_FILES) $(TEST_SRC) -o $(EXECUTABLE) $(LIBS)
+	$(CC) $(CFLAGS) $(TEST_SRC) -o $(EXECUTABLE) $(LIBRARY) $(LIBS)
 
 test: $(LIBRARY) $(EXECUTABLE)
 	./$(EXECUTABLE)
-	rm -r $(OBJ_FILES)
 
-$(GCOV_EXECUTABLE): $(SRC_FILES) $(TEST_SRC) $(LIBRARY)
+# building file for gcov report
+$(GCOV_EXECUTABLE): $(SRC_FILES) $(TEST_SRC)
 	$(CC) $(CFLAGS) $(GCOV_FLAGS) $^ -o $@ $(LIBS)
 
+# building gcov report
 gcov_report: $(GCOV_EXECUTABLE)
 	./$(GCOV_EXECUTABLE)
 	gcov *.gcda
 	gcovr -r . --html --html-details -o coverage_report.html
-	rm -f *.gc* *.o
+	rm -f *.gc* $(GCOV_EXECUTABLE)
 
 valgrind: $(EXECUTABLE)
 	$(VALG) $(EXECUTABLE)
-	rm -f *.gc* *.o
 
 cpp_check:
 	$(CPPCH) $(SRC_FILES) $(HEAD_FILE)
