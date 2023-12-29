@@ -1,6 +1,6 @@
 CC = gcc
 GENLAGS = -Wall -Wextra -Werror -std=c11
-REPLAGS =-fprofile-arcs -ftest-coverage #-g
+REPLAGS =-fprofile-arcs -ftest-coverage -g
 LIBS = -lcheck  -lm #-lsubunit
 VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=RESULT_VALGRIND.txt ./
 #VALG = valgrind --tool=memcheck  --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=RESULT_VALGRIND.txt ./
@@ -49,7 +49,6 @@ $(EXECUTABLE): $(TESTLIBRARY) $(TEST_OBJ)
 
 # run tests
 test: $(EXECUTABLE)
-	rm -f *.o
 	./$(EXECUTABLE)
 
 # coverage test
@@ -76,7 +75,7 @@ clang_all:
 	rm -f .clang-format
 
 clean:
-	rm -f $(EXECUTABLE) *.a *.gc* *.html *.css *.o
+	rm -f $(EXECUTABLE) *.a *.gc* *.html *.css *.o RESULT_VALGRIND.txt
 
 rebuild: clean all
 
