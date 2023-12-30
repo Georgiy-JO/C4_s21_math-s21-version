@@ -30,8 +30,11 @@ mk:
 clean:
 	rm -f  *.o $(MAIN) .clang-format
 
-clean_all:
-	rm -f  *.o $(MAIN) .clang-format $(LIB) $(HEADER) 
+clean_all: clean
+	rm -f $(LIB) $(HEADER) 
+
+clean_all_all: clean_all
+	rm -f  ../src/s21_math.a
 
 rebuild: clean all
 
